@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+bin/
+obj/
+
+# Environment / sensitive files
+.env
+.env.local
+secrets.txt
+
+# Logs and temporary files
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+# Build / output
+dist/
+build/
+
+# Monorepo-specific runtime/build artifacts
+services/whatsapp/.wwebjs_cache/
+services/whatsapp/wa-auth/
+velzon/Master/public/build/
