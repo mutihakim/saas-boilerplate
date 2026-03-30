@@ -1,0 +1,19 @@
+{
+  "tenant.errors.forbidden.page_title": "Forbidden",
+  "tenant.errors.forbidden.title": "403 - Access Forbidden",
+  "tenant.errors.forbidden.message_default": "You do not have permission to access this page.",
+  "tenant.errors.forbidden.help": "Contact tenant owner/admin if you need access to this module.",
+  "tenant.errors.forbidden.parent": "Security",
+  "tenant.errors.upgrade.page_title": "Upgrade Required",
+  "tenant.errors.upgrade.title": "Feature Locked by Subscription",
+  "tenant.errors.upgrade.message": "Module {{module}} is not available on your current plan.",
+  "tenant.errors.upgrade.plan_label": "Current plan:",
+  "tenant.errors.upgrade.help": "Contact platform admin to upgrade this tenant subscription.",
+  "tenant.errors.upgrade.parent": "Subscription",
+  "tenant.errors.access_required.page_title": "Tenant Access Required",
+  "tenant.errors.access_required.title": "Tenant Access Required",
+  "tenant.errors.access_required.message": "Your account is not connected to an active tenant. Contact platform admin for access.",
+  "tenant.errors.access_required.help": "After membership is granted, you can access the tenant workspace directly.",
+  "tenant.errors.access_required.logout": "Logout",
+  "tenant.errors.actions.back_to_dashboard": "Go to Dashboard"
+}

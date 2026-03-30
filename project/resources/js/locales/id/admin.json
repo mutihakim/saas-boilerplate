@@ -1,0 +1,15 @@
+{
+  "Admin Dashboard": "Dashboard Admin",
+  "Manage Tenants": "Kelola Tenant",
+  "Manage Subscriptions": "Kelola Langganan",
+  "Open Read-only": "Buka Read-only",
+  "Impersonate Owner": "Impersonasi Owner",
+  "Manage Subscription": "Kelola Langganan",
+  "admin.notifications.try_again": "Silakan coba lagi beberapa saat lagi.",
+  "admin.notifications.impersonation_unavailable_title": "Impersonasi tidak tersedia",
+  "admin.notifications.impersonation_unavailable_detail": "Tenant ini belum memiliki user owner/admin sebagai target impersonasi.",
+  "admin.notifications.impersonation_start_failed_title": "Tidak dapat memulai impersonasi",
+  "admin.notifications.subscription_updated_title": "Langganan berhasil diperbarui",
+  "admin.notifications.subscription_updated_detail": "{{tenant}} dipindahkan ke paket {{plan}}",
+  "admin.notifications.subscription_update_failed_title": "Tidak dapat memperbarui langganan"
+}

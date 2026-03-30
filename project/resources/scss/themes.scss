@@ -1,0 +1,54 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+@import "./icons.scss";
+@import "./config/saas/bootstrap.scss";
+@import "./config/saas/variables-custom";
+
+@import "./components/root";
+@import "./components/reboot";
+@import "./components/avatar";
+@import "./components/forms";
+@import "./components/helper";
+@import "./components/scrollspy";
+@import "./components/toast";
+@import "./components/widgets";
+
+@import "./pages/authentication";
+@import "./pages/chat";
+@import "./pages/dashboard";
+@import "./pages/errors";
+@import "./pages/landing";
+@import "./pages/profile";
+@import "./pages/team";
+
+@import "./mermaid.min.css";
+
+:root {
+    --app-shell-header-height: 72px;
+}
+
+body {
+    font-family: 'Manrope', sans-serif;
+    background: linear-gradient(180deg, rgba(var(--bs-primary-rgb), 0.04), transparent 240px), var(--bs-body-bg);
+}
+
+.auth-clean-shell__backdrop {
+    background-image:
+        radial-gradient(circle at top left, rgba(var(--bs-primary-rgb), 0.24), transparent 34%),
+        linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%);
+}
+
+.auth-clean-shell__brandmark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.auth-clean-shell .footer {
+    padding: 0 0 1.5rem;
+    color: var(--bs-secondary-color);
+}
+
+.Toastify__toast-container {
+    top: calc(var(--app-shell-header-height) + 0.75rem);
+}

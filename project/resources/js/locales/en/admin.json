@@ -1,0 +1,15 @@
+{
+  "Admin Dashboard": "Admin Dashboard",
+  "Manage Tenants": "Manage Tenants",
+  "Manage Subscriptions": "Manage Subscriptions",
+  "Open Read-only": "Open Read-only",
+  "Impersonate Owner": "Impersonate Owner",
+  "Manage Subscription": "Manage Subscription",
+  "admin.notifications.try_again": "Please try again in a few moments.",
+  "admin.notifications.impersonation_unavailable_title": "Impersonation unavailable",
+  "admin.notifications.impersonation_unavailable_detail": "Tenant does not have an owner/admin user target.",
+  "admin.notifications.impersonation_start_failed_title": "Failed to start impersonation",
+  "admin.notifications.subscription_updated_title": "Subscription updated",
+  "admin.notifications.subscription_updated_detail": "{{tenant}} moved to {{plan}}",
+  "admin.notifications.subscription_update_failed_title": "Failed to update subscription"
+}

@@ -1,0 +1,23 @@
+{
+  "Welcome": "Selamat datang",
+  "Search ...": "Cari ...",
+  "Back": "Kembali",
+  "Cancel": "Batal",
+  "Save": "Simpan",
+  "Create": "Buat",
+  "Update": "Perbarui",
+  "Delete": "Hapus",
+  "Locked": "Terkunci",
+  "Settings": "Pengaturan",
+  "Chats": "Chat",
+  "Superadmin": "Superadmin",
+  "Member": "Member",
+  "Logout": "Keluar",
+  "api.error.unauthenticated.title": "Autentikasi dibutuhkan",
+  "api.error.unauthenticated.detail": "Sesi Anda berakhir. Silakan login ulang lalu coba lagi.",
+  "api.error.forbidden.title": "Akses ditolak",
+  "api.error.forbidden.detail": "Anda tidak memiliki izin untuk melakukan aksi ini di tenant aktif.",
+  "api.error.csrf.title": "Sesi kedaluwarsa",
+  "api.error.csrf.detail": "Muat ulang halaman lalu coba lagi.",
+  "api.error.generic.detail": "Silakan coba lagi beberapa saat lagi."
+}

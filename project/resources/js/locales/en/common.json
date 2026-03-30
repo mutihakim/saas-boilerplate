@@ -1,0 +1,23 @@
+{
+  "Welcome": "Welcome",
+  "Search ...": "Search ...",
+  "Back": "Back",
+  "Cancel": "Cancel",
+  "Save": "Save",
+  "Create": "Create",
+  "Update": "Update",
+  "Delete": "Delete",
+  "Locked": "Locked",
+  "Settings": "Settings",
+  "Chats": "Chats",
+  "Superadmin": "Superadmin",
+  "Member": "Member",
+  "Logout": "Logout",
+  "api.error.unauthenticated.title": "Authentication required",
+  "api.error.unauthenticated.detail": "Your session has expired. Please sign in again and retry.",
+  "api.error.forbidden.title": "Access denied",
+  "api.error.forbidden.detail": "You do not have permission to perform this action in the active tenant.",
+  "api.error.csrf.title": "Session expired",
+  "api.error.csrf.detail": "Refresh the page and try again.",
+  "api.error.generic.detail": "Please try again in a few moments."
+}

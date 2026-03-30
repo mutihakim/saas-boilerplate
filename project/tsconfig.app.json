@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "resources/js/**/*.ts",
+    "resources/js/**/*.tsx",
+    "resources/js/types/**/*.d.ts",
+    "playwright.config.ts",
+    "tests/e2e/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "vendor",
+    "resources/js/compat/**"
+  ]
+}

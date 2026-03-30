@@ -1,0 +1,1 @@
+import{r as t}from"./app-DJ9lNZKt.js";function s(r){return r.code==="Escape"||r.keyCode===27}function n(){const r=t.version.split(".");return{major:+r[0],minor:+r[1],patch:+r[2]}}function e(r){if(!r||typeof r=="function")return null;const{major:o}=n();return o>=19?r.props.ref:r.ref}export{e as g,s as i};

@@ -1,0 +1,19 @@
+{
+  "tenant.errors.forbidden.page_title": "Akses Ditolak",
+  "tenant.errors.forbidden.title": "403 - Akses Ditolak",
+  "tenant.errors.forbidden.message_default": "Anda tidak memiliki izin untuk mengakses halaman ini.",
+  "tenant.errors.forbidden.help": "Hubungi owner/admin tenant jika Anda memerlukan akses modul ini.",
+  "tenant.errors.forbidden.parent": "Keamanan",
+  "tenant.errors.upgrade.page_title": "Perlu Upgrade",
+  "tenant.errors.upgrade.title": "Fitur Terkunci oleh Langganan",
+  "tenant.errors.upgrade.message": "Modul {{module}} belum tersedia pada paket Anda saat ini.",
+  "tenant.errors.upgrade.plan_label": "Paket saat ini:",
+  "tenant.errors.upgrade.help": "Hubungi admin platform untuk upgrade langganan tenant.",
+  "tenant.errors.upgrade.parent": "Langganan",
+  "tenant.errors.access_required.page_title": "Akses Tenant Dibutuhkan",
+  "tenant.errors.access_required.title": "Akses Tenant Dibutuhkan",
+  "tenant.errors.access_required.message": "Akun Anda belum terhubung ke tenant aktif. Hubungi admin platform untuk pemberian akses.",
+  "tenant.errors.access_required.help": "Setelah membership diberikan, Anda bisa langsung masuk ke workspace tenant.",
+  "tenant.errors.access_required.logout": "Keluar",
+  "tenant.errors.actions.back_to_dashboard": "Ke Dashboard"
+}

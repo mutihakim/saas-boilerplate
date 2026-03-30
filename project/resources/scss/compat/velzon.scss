@@ -1,0 +1,10 @@
+/*
+ * Optional Velzon compatibility entry.
+ * This file is intentionally not loaded by the default app bundle.
+ * Import it only when porting a new reference page that still needs
+ * additional icon packs or template-era styling helpers.
+ */
+
+@import "../plugins/icons/materialdesignicons";
+@import "../plugins/icons/boxicons";
+@import "../plugins/icons/line-awesome";

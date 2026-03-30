@@ -1,0 +1,1 @@
+import{j as r,R as t}from"./app-DJ9lNZKt.js";const a=e=>r.jsx(t.Fragment,{children:e.getValue()}),s=e=>r.jsx(t.Fragment,{children:e.getValue()}),c=e=>r.jsx(t.Fragment,{children:e.getValue()}),i=e=>r.jsx(t.Fragment,{children:e.getValue()}),u=e=>r.jsx(t.Fragment,{children:e.getValue()});export{c as HighPrice,i as LowPrice,u as MarketVolume,s as Pairs,a as Price};
