@@ -69,6 +69,8 @@ Internal callback behavior note:
 
 - `POST /internal/v1/whatsapp/messages` (internal token protected) dapat memicu auto outgoing reply jika incoming text diawali `/` atau `!` dan command valid (`ping`, `help`).
 - Jika command tidak dikenali, sistem mengirim fallback help message.
+- `POST /internal/v1/whatsapp/session-state` menerapkan guard global `connected_jid`: jika nomor sudah aktif di tenant lain, tenant callback yang baru akan dipaksa `disconnected` dengan metadata conflict (`jid_conflict`) dan endpoint tetap merespons `200`.
+- Pada path conflict tersebut, backend akan mencoba `remove session` ke service untuk tenant newcomer secara _best effort_; kegagalan service hanya dicatat di log dan tidak mengubah respons callback (`200`).
 
 Query contract for `GET /whatsapp/chats/{jid}/messages`:
 

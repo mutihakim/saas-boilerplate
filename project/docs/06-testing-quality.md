@@ -55,6 +55,9 @@ WhatsApp (API + Realtime):
   - Auto command reply incoming (`/ping`, `!help`) melalui callback internal.
   - Pesan non-command tidak boleh memicu auto-reply.
   - Service command down tetap menjaga callback `200` (no hard fail di callback path).
+  - Guard bisnis `1 connected_jid = 1 tenant aktif` (reject newcomer + owner tenant tetap connected).
+  - Unique partial index `connected_jid` non-null menolak duplikasi lintas tenant.
+  - Pada conflict `connected_jid`, callback tetap `200` walau proses `remove session` ke service gagal (best effort).
 
 E2E smoke:
 

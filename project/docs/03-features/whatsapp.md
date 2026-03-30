@@ -36,6 +36,18 @@ Aplikasi SaaS ini **meninggalkan proses HTTP polling usang** dan beralih ke rute
 * Command tidak dikenal akan fallback ke response help.
 * Balasan dikirim melalui `WhatsappServiceClient` (service global) dan tidak mengganggu callback utama jika service sedang gagal.
 
+### 6. Guard Nomor Global Antar Tenant (`connected_jid`)
+* Satu `connected_jid` kini hanya boleh aktif di satu tenant.
+* Policy conflict: **reject newcomer**. Jika tenant baru mencoba `connected` dengan nomor yang sudah aktif di tenant lain, callback akan memaksa tenant baru menjadi `disconnected`.
+* Metadata conflict disimpan pada session:
+  * `disconnect_reason=lifecycle_state=jid_conflict`
+  * `conflict_connected_jid`
+  * `conflict_owner_tenant_id`
+  * `conflict_at`
+* Setelah status conflict tersimpan, sistem juga men-trigger `removeSession` ke service untuk tenant newcomer sebagai _best effort_ (gagal remove tidak memutus callback utama).
+* Safety net database: unique partial index `connected_jid IS NOT NULL` di `tenant_whatsapp_settings`.
+* Saat migrasi, data duplikat existing dibersihkan otomatis dengan policy **keep tenant terlama** (`updated_at` paling lama, tie-break `id` terkecil); tenant lain ditandai `jid_conflict_migration`.
+
 ## Keamanan Otentikasi Channel
 Semua saluran dilindungi berlapis oleh `routes/channels.php` yang secara paksa menolak koneksi (`403 Forbidden`) jika ID Tenant pada String Channel tidak sesuai dengan ID Tenant otoritasi sesi user terkait.
 

@@ -1,7 +1,7 @@
 import { Head, usePage } from '@inertiajs/react';
 import axios from 'axios';
 import React, { useEffect, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Modal, Row } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Modal, Row, Spinner } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 
 import TenantPageTitle from '../../../Components/Common/TenantPageTitle';
@@ -38,9 +38,38 @@ function WhatsAppSettingsPage() {
     const lifecycleState = typeof session?.meta?.lifecycle_state === 'string'
         ? session.meta.lifecycle_state
         : disconnectReason;
-    const lifecycleLabelKey = lifecycleState
-        ? `tenant.whatsapp.settings.lifecycle.${lifecycleState}`
+    const hasJidConflictMeta = disconnectReason === 'jid_conflict'
+        || typeof session?.meta?.conflict_connected_jid === 'string'
+        || typeof session?.meta?.conflict_owner_tenant_id === 'number'
+        || typeof session?.meta?.conflict_owner_tenant_id === 'string';
+    const displayLifecycleState = hasJidConflictMeta ? 'manual_remove' : lifecycleState;
+    const lifecycleLabelKey = displayLifecycleState
+        ? `tenant.whatsapp.settings.lifecycle.${displayLifecycleState}`
         : null;
+    const conflictConnectedJid = typeof session?.meta?.conflict_connected_jid === 'string'
+        ? session.meta.conflict_connected_jid
+        : null;
+    const conflictOwnerTenantId = typeof session?.meta?.conflict_owner_tenant_id === 'number'
+        ? String(session.meta.conflict_owner_tenant_id)
+        : (typeof session?.meta?.conflict_owner_tenant_id === 'string' ? session.meta.conflict_owner_tenant_id : null);
+    const isJidConflictState = hasJidConflictMeta;
+    const isWaitingForQr = session?.connection_status === 'connecting' && !qrDataUrl;
+    const lifecycleLabel = (() => {
+        if (!displayLifecycleState || !lifecycleLabelKey) {
+            return '-';
+        }
+
+        const translated = t(lifecycleLabelKey);
+        if (translated !== lifecycleLabelKey) {
+            return translated;
+        }
+
+        if (displayLifecycleState === 'qr') {
+            return t('tenant.whatsapp.settings.lifecycle_qr_generated_fallback');
+        }
+
+        return displayLifecycleState.replaceAll('_', ' ');
+    })();
 
     function showApiError(err: any, fallback: string) {
         const parsed = parseApiError(err, fallback);
@@ -208,6 +237,14 @@ function WhatsAppSettingsPage() {
                     <Card className="h-100">
                         <Card.Body>
                             <h5 className="card-title mb-3">{t('tenant.whatsapp.settings.session_status')}</h5>
+                            {isJidConflictState && (
+                                <Alert variant="warning" className="mb-3">
+                                    {t('tenant.whatsapp.settings.alert.jid_conflict', {
+                                        jid: conflictConnectedJid ?? '-',
+                                        owner_tenant_id: conflictOwnerTenantId ?? '-',
+                                    })}
+                                </Alert>
+                            )}
                             <Row className="g-3 mb-3">
                                 <Col md={6}>
                                     <p className="mb-2"><strong>{t('tenant.whatsapp.settings.session_name')}:</strong> {session?.session_name ?? '-'}</p>
@@ -219,15 +256,17 @@ function WhatsAppSettingsPage() {
                                     {lifecycleLabelKey && (
                                         <p className="mb-0">
                                             <strong>{t('tenant.whatsapp.settings.lifecycle_label')}:</strong>{' '}
-                                            <Badge bg="secondary">{t(lifecycleLabelKey)}</Badge>
+                                            <Badge bg="secondary">{lifecycleLabel}</Badge>
                                         </p>
                                     )}
                                 </Col>
                                 <Col md={6}>
                                     <h6 className="mb-2">{t('tenant.whatsapp.settings.qr_title')}</h6>
-                                    <Alert variant="light" className="mb-2">
-                                        {t('tenant.whatsapp.settings.qr_info')}
-                                    </Alert>
+                                    {!isWaitingForQr && (
+                                        <Alert variant="light" className="mb-2">
+                                            {t('tenant.whatsapp.settings.qr_info')}
+                                        </Alert>
+                                    )}
                                     {lifecycleState === 'qr_timeout' && (
                                         <Alert variant="warning" className="mb-2">
                                             {t('tenant.whatsapp.settings.qr_expired')}
@@ -236,6 +275,11 @@ function WhatsAppSettingsPage() {
                                     {qrDataUrl ? (
                                         <div className="text-center border rounded p-2 bg-light-subtle">
                                             <img src={qrDataUrl} alt="WhatsApp QR" style={{ maxWidth: 220, width: '100%', height: 'auto' }} />
+                                        </div>
+                                    ) : isWaitingForQr ? (
+                                        <div className="text-center border rounded p-3 bg-light-subtle">
+                                            <Spinner animation="border" size="sm" className="mb-2" />
+                                            <p className="text-muted mb-0">{t('tenant.whatsapp.settings.qr_loading')}</p>
                                         </div>
                                     ) : (
                                         <p className="text-muted mb-0">{t('tenant.whatsapp.settings.qr_empty')}</p>

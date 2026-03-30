@@ -61,6 +61,7 @@ Aturannya:
 1. Card status sesi mencakup informasi lifecycle, action connect/disconnect/remove, dan panel QR/Handshake dalam satu surface.
 2. Halaman settings wajib memiliki section `Command Guide` yang menjelaskan prefix command (`/`, `!`) dan fungsi command aktif (`ping`, `help`).
 3. Seluruh copy di section command wajib i18n EN/ID dan tidak boleh hardcoded.
+4. Saat lifecycle `jid_conflict` atau `jid_conflict_migration`, halaman wajib menampilkan warning alert yang menjelaskan nomor bentrok dan tenant owner conflict (berbasis metadata callback).
 
 ## Screenshot Checklist
 

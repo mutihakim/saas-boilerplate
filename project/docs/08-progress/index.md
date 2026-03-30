@@ -12,7 +12,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | i18n | In Progress | 80% | Frontend Team | 2026-03-30 | [i18n Progress](./modules/i18n.md) |
 | Subscription | In Progress | 85% | Platform Team | 2026-03-30 | [Subscription Progress](./modules/subscription.md) |
 | Tenant Settings | In Progress | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
-| WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) (cursor pagination 15/batch, 401 recovery, PM2 Reverb profile, auto-command ping/help, settings command guide) |
+| WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) (cursor pagination 15/batch, 401 recovery, PM2 Reverb profile, auto-command ping/help, settings command guide, guard 1 connected_jid lintas tenant) |
 
 ## Top Global Blocker
 

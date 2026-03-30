@@ -8,6 +8,7 @@ use App\Models\TenantWhatsappMessage;
 use App\Models\TenantWhatsappSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Http;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -222,6 +223,209 @@ class TenantWhatsappServiceIntegrationTest extends TestCase
         $this->assertSame('qr_timeout', $setting->meta['disconnect_reason'] ?? null);
         $this->assertFalse((bool) ($setting->meta['restore_eligible'] ?? true));
         $this->assertArrayHasKey('connect_requested_at', $setting->meta ?? []);
+    }
+
+    public function test_internal_session_state_rejects_newcomer_when_connected_jid_is_already_owned(): void
+    {
+        config()->set('whatsapp.internal_token', 'internal-secret');
+        [$ownerTenant] = $this->seedTenantOwner('pro');
+        [$newcomerTenant] = $this->seedTenantOwner('basic');
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $ownerTenant->id,
+            'session_name' => 'tenant-' . dechex((int) $ownerTenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628111111111@c.us',
+            'auto_connect' => true,
+            'meta' => ['lifecycle_state' => 'connected'],
+        ]);
+
+        $response = $this->postJson('/internal/v1/whatsapp/session-state', [
+            'tenant_id' => $newcomerTenant->id,
+            'connection_status' => 'connected',
+            'connected_jid' => '628111111111@c.us',
+            'auto_connect' => true,
+            'meta' => ['lifecycle_state' => 'connected'],
+        ], [
+            'X-Internal-Token' => 'internal-secret',
+        ]);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+
+        $newcomerSetting = TenantWhatsappSetting::query()
+            ->where('tenant_id', $newcomerTenant->id)
+            ->firstOrFail();
+        $ownerSetting = TenantWhatsappSetting::query()
+            ->where('tenant_id', $ownerTenant->id)
+            ->firstOrFail();
+
+        $this->assertSame('disconnected', $newcomerSetting->connection_status);
+        $this->assertNull($newcomerSetting->connected_jid);
+        $this->assertFalse((bool) $newcomerSetting->auto_connect);
+        $this->assertSame('jid_conflict', $newcomerSetting->meta['disconnect_reason'] ?? null);
+        $this->assertSame($ownerTenant->id, (int) ($newcomerSetting->meta['conflict_owner_tenant_id'] ?? 0));
+        $this->assertSame('628111111111@c.us', $newcomerSetting->meta['conflict_connected_jid'] ?? null);
+
+        $this->assertSame('connected', $ownerSetting->connection_status);
+        $this->assertSame('628111111111@c.us', $ownerSetting->connected_jid);
+        $this->assertTrue((bool) $ownerSetting->auto_connect);
+    }
+
+    public function test_connected_jid_unique_index_rejects_duplicate_non_null_values(): void
+    {
+        [$tenantA] = $this->seedTenantOwner('pro');
+        [$tenantB] = $this->seedTenantOwner('basic');
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $tenantA->id,
+            'session_name' => 'tenant-' . dechex((int) $tenantA->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628222222222@c.us',
+            'auto_connect' => true,
+        ]);
+
+        $this->expectException(QueryException::class);
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $tenantB->id,
+            'session_name' => 'tenant-' . dechex((int) $tenantB->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628222222222@c.us',
+            'auto_connect' => true,
+        ]);
+    }
+
+    public function test_internal_session_state_jid_conflict_triggers_remove_session_best_effort(): void
+    {
+        config()->set('whatsapp.internal_token', 'internal-secret');
+        config()->set('whatsapp.service_enabled', true);
+        config()->set('whatsapp.service_url', 'http://wa-service.test');
+
+        [$ownerTenant] = $this->seedTenantOwner('pro');
+        [$newcomerTenant] = $this->seedTenantOwner('basic');
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $ownerTenant->id,
+            'session_name' => 'tenant-' . dechex((int) $ownerTenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628333333333@c.us',
+            'auto_connect' => true,
+        ]);
+
+        Http::fake([
+            'http://wa-service.test/api/v1/tenants/*/whatsapp/session/remove' => Http::response([
+                'ok' => true,
+                'data' => ['removed' => true],
+            ], 200),
+        ]);
+
+        $response = $this->postJson('/internal/v1/whatsapp/session-state', [
+            'tenant_id' => $newcomerTenant->id,
+            'connection_status' => 'connected',
+            'connected_jid' => '628333333333@c.us',
+            'auto_connect' => true,
+            'meta' => ['lifecycle_state' => 'connected'],
+        ], [
+            'X-Internal-Token' => 'internal-secret',
+        ]);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+
+        Http::assertSent(function ($request) use ($newcomerTenant) {
+            return $request->url() === "http://wa-service.test/api/v1/tenants/{$newcomerTenant->id}/whatsapp/session/remove";
+        });
+    }
+
+    public function test_internal_session_state_jid_conflict_remove_failure_does_not_fail_callback(): void
+    {
+        config()->set('whatsapp.internal_token', 'internal-secret');
+        config()->set('whatsapp.service_enabled', true);
+        config()->set('whatsapp.service_url', 'http://wa-service.test');
+
+        [$ownerTenant] = $this->seedTenantOwner('pro');
+        [$newcomerTenant] = $this->seedTenantOwner('basic');
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $ownerTenant->id,
+            'session_name' => 'tenant-' . dechex((int) $ownerTenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628444444444@c.us',
+            'auto_connect' => true,
+        ]);
+
+        Http::fake([
+            'http://wa-service.test/api/v1/tenants/*/whatsapp/session/remove' => Http::response([
+                'ok' => false,
+                'error' => [
+                    'code' => 'SERVICE_DOWN',
+                    'message' => 'Service down',
+                ],
+            ], 503),
+        ]);
+
+        $response = $this->postJson('/internal/v1/whatsapp/session-state', [
+            'tenant_id' => $newcomerTenant->id,
+            'connection_status' => 'connected',
+            'connected_jid' => '628444444444@c.us',
+            'auto_connect' => true,
+            'meta' => ['lifecycle_state' => 'connected'],
+        ], [
+            'X-Internal-Token' => 'internal-secret',
+        ]);
+
+        $response->assertOk()->assertJsonPath('ok', true);
+
+        $newcomerSetting = TenantWhatsappSetting::query()
+            ->where('tenant_id', $newcomerTenant->id)
+            ->firstOrFail();
+        $this->assertSame('disconnected', $newcomerSetting->connection_status);
+        $this->assertSame('jid_conflict', $newcomerSetting->meta['disconnect_reason'] ?? null);
+    }
+
+    public function test_internal_session_state_preserves_jid_conflict_metadata_after_manual_remove_follow_up(): void
+    {
+        config()->set('whatsapp.internal_token', 'internal-secret');
+        [$ownerTenant] = $this->seedTenantOwner('pro');
+        [$newcomerTenant] = $this->seedTenantOwner('basic');
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $ownerTenant->id,
+            'session_name' => 'tenant-' . dechex((int) $ownerTenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628555555555@c.us',
+            'auto_connect' => true,
+        ]);
+
+        $this->postJson('/internal/v1/whatsapp/session-state', [
+            'tenant_id' => $newcomerTenant->id,
+            'connection_status' => 'connected',
+            'connected_jid' => '628555555555@c.us',
+            'auto_connect' => true,
+            'meta' => ['lifecycle_state' => 'connected'],
+        ], [
+            'X-Internal-Token' => 'internal-secret',
+        ])->assertOk();
+
+        $this->postJson('/internal/v1/whatsapp/session-state', [
+            'tenant_id' => $newcomerTenant->id,
+            'connection_status' => 'disconnected',
+            'connected_jid' => null,
+            'auto_connect' => false,
+            'meta' => [
+                'disconnect_reason' => 'manual_remove',
+                'lifecycle_state' => 'manual_remove',
+            ],
+        ], [
+            'X-Internal-Token' => 'internal-secret',
+        ])->assertOk();
+
+        $newcomerSetting = TenantWhatsappSetting::query()
+            ->where('tenant_id', $newcomerTenant->id)
+            ->firstOrFail();
+        $this->assertSame('jid_conflict', $newcomerSetting->meta['disconnect_reason'] ?? null);
+        $this->assertSame('manual_remove', $newcomerSetting->meta['lifecycle_state'] ?? null);
+        $this->assertSame('628555555555@c.us', $newcomerSetting->meta['conflict_connected_jid'] ?? null);
+        $this->assertSame($ownerTenant->id, (int) ($newcomerSetting->meta['conflict_owner_tenant_id'] ?? 0));
     }
 
     public function test_internal_sessions_supports_eligible_only_filter(): void

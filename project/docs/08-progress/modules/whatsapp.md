@@ -25,6 +25,9 @@ Menyediakan kapabilitas integrasi WhatsApp berbasis WebSockets (via Laravel Reve
 - Proses `reverb:start` + `queue:work` sudah disiapkan untuk auto-run melalui PM2 profile `ecosystem.config.cjs`.
 - Auto-reply command incoming (`/` dan `!`) untuk `ping` dan `help` sudah aktif dari callback Laravel, dengan fallback help untuk command tidak dikenal.
 - UI WhatsApp Settings direfresh: QR/Handshake digabung ke card status sesi, plus card baru `Command Guide` (EN/ID).
+- Guard bisnis lintas tenant aktif: satu `connected_jid` hanya boleh aktif di satu tenant (policy reject newcomer), dengan metadata conflict `jid_conflict` untuk observabilitas UI.
+- Safety net database ditambahkan via unique partial index `connected_jid IS NOT NULL`, termasuk cleanup migrasi duplikasi existing (`jid_conflict_migration`, keep tenant terlama).
+- Saat conflict runtime, tenant newcomer kini juga otomatis ditrigger `removeSession` ke service secara best effort agar auth cache service ikut dibersihkan.
 
 ## Blocker & Dependency
 

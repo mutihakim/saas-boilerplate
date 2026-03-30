@@ -15,6 +15,7 @@ use App\Support\ApiResponder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\Database\QueryException;
 
 class InternalWhatsappCallbackController extends Controller
 {
@@ -67,11 +68,41 @@ class InternalWhatsappCallbackController extends Controller
             'connection_status' => (string) $payload['connection_status'],
             'auto_connect' => array_key_exists('auto_connect', $payload) ? (bool) $payload['auto_connect'] : null,
         ]);
+        $tenantId = (int) $payload['tenant_id'];
+        $requestedConnectedJid = trim((string) ($payload['connected_jid'] ?? ''));
+        $payload['connected_jid'] = $requestedConnectedJid !== '' ? $requestedConnectedJid : null;
+        $conflictOwnerTenantId = null;
+        $shouldRemoveConflictedSession = false;
+        if ($payload['connection_status'] === 'connected' && $requestedConnectedJid !== '') {
+            $conflictOwnerTenantId = $this->findConnectedJidConflictOwner($tenantId, $requestedConnectedJid);
+            if ($conflictOwnerTenantId !== null) {
+                $payload['connection_status'] = 'disconnected';
+                $payload['connected_jid'] = null;
+                $payload['auto_connect'] = false;
+                $payload['meta'] = array_merge(
+                    is_array($payload['meta'] ?? null) ? $payload['meta'] : [],
+                    [
+                        'disconnect_reason' => 'jid_conflict',
+                        'lifecycle_state' => 'manual_remove',
+                        'restore_eligible' => false,
+                        'conflict_connected_jid' => $requestedConnectedJid,
+                        'conflict_owner_tenant_id' => $conflictOwnerTenantId,
+                        'conflict_at' => now()->toIso8601String(),
+                    ]
+                );
+                Log::warning('whatsapp.callback.session_state.jid_conflict_reject_newcomer', [
+                    'tenant_id' => $tenantId,
+                    'owner_tenant_id' => $conflictOwnerTenantId,
+                    'connected_jid' => $requestedConnectedJid,
+                ]);
+                $shouldRemoveConflictedSession = true;
+            }
+        }
         $setting = null;
 
         try {
-            $setting = TenantWhatsappSetting::query()->firstOrNew(['tenant_id' => $payload['tenant_id']]);
-            $setting->session_name = $setting->session_name ?: ('tenant-' . dechex((int) $payload['tenant_id']));
+            $setting = TenantWhatsappSetting::query()->firstOrNew(['tenant_id' => $tenantId]);
+            $setting->session_name = $setting->session_name ?: ('tenant-' . dechex($tenantId));
             $setting->connection_status = $payload['connection_status'];
             $setting->connected_jid = $payload['connected_jid'] ?? null;
 
@@ -81,8 +112,29 @@ class InternalWhatsappCallbackController extends Controller
                 $setting->auto_connect = true;
             }
 
+            $existingMeta = is_array($setting->meta) ? $setting->meta : [];
             $incomingMeta = is_array($payload['meta'] ?? null) ? $payload['meta'] : [];
-            $meta = array_merge(is_array($setting->meta) ? $setting->meta : [], $incomingMeta);
+            $meta = array_merge($existingMeta, $incomingMeta);
+
+            $hadExistingJidConflict = ($existingMeta['disconnect_reason'] ?? null) === 'jid_conflict'
+                || is_string($existingMeta['conflict_connected_jid'] ?? null)
+                || isset($existingMeta['conflict_owner_tenant_id']);
+            if ($hadExistingJidConflict) {
+                if (!is_string($meta['conflict_connected_jid'] ?? null) || trim((string) $meta['conflict_connected_jid']) === '') {
+                    $meta['conflict_connected_jid'] = $existingMeta['conflict_connected_jid'] ?? null;
+                }
+                if (!isset($meta['conflict_owner_tenant_id']) && isset($existingMeta['conflict_owner_tenant_id'])) {
+                    $meta['conflict_owner_tenant_id'] = $existingMeta['conflict_owner_tenant_id'];
+                }
+                if (!is_string($meta['conflict_at'] ?? null) && is_string($existingMeta['conflict_at'] ?? null)) {
+                    $meta['conflict_at'] = $existingMeta['conflict_at'];
+                }
+            }
+
+            if (($meta['disconnect_reason'] ?? null) === 'manual_remove' && $hadExistingJidConflict) {
+                // Keep conflict reason for UI alert even after service emits follow-up remove callback.
+                $meta['disconnect_reason'] = 'jid_conflict';
+            }
             
             if (isset($incomingMeta['qr_data_url']) || isset($incomingMeta['qr_text'])) {
                 $meta['lifecycle_state'] = 'qr';
@@ -105,13 +157,49 @@ class InternalWhatsappCallbackController extends Controller
             }
             
             $setting->meta = $meta;
-            $setting->save();
+
+            try {
+                $setting->save();
+            } catch (QueryException $queryException) {
+                if (!$this->isConnectedJidUniqueConstraintViolation($queryException, $setting->connected_jid)) {
+                    throw $queryException;
+                }
+
+                $raceConnectedJid = (string) $setting->connected_jid;
+                $raceOwnerTenantId = $this->findConnectedJidConflictOwner($tenantId, $raceConnectedJid);
+                $raceMeta = is_array($setting->meta) ? $setting->meta : [];
+                $raceMeta = array_merge($raceMeta, [
+                    'disconnect_reason' => 'jid_conflict',
+                    'lifecycle_state' => 'manual_remove',
+                    'restore_eligible' => false,
+                    'conflict_connected_jid' => $raceConnectedJid,
+                    'conflict_owner_tenant_id' => $raceOwnerTenantId,
+                    'conflict_at' => now()->toIso8601String(),
+                ]);
+                unset($raceMeta['qr_data_url'], $raceMeta['qr_text']);
+
+                $setting->connection_status = 'disconnected';
+                $setting->connected_jid = null;
+                $setting->auto_connect = false;
+                $setting->meta = $raceMeta;
+                $setting->save();
+
+                Log::warning('whatsapp.callback.session_state.jid_conflict_unique_index_race', [
+                    'tenant_id' => $tenantId,
+                    'owner_tenant_id' => $raceOwnerTenantId,
+                    'connected_jid' => $raceConnectedJid,
+                ]);
+                $this->tryRemoveSessionAfterJidConflict($tenantId, $raceConnectedJid, $raceOwnerTenantId);
+            }
             Log::info('whatsapp.callback.session_state.persisted', [
                 'tenant_id' => (int) $setting->tenant_id,
                 'session_name' => (string) $setting->session_name,
                 'connection_status' => (string) $setting->connection_status,
                 'auto_connect' => (bool) $setting->auto_connect,
             ]);
+            if ($shouldRemoveConflictedSession) {
+                $this->tryRemoveSessionAfterJidConflict($tenantId, $requestedConnectedJid, $conflictOwnerTenantId);
+            }
 
             $broadcastMeta = is_array($setting->meta) ? $setting->meta : [];
             unset($broadcastMeta['qr_data_url'], $broadcastMeta['qr_text']);
@@ -134,6 +222,60 @@ class InternalWhatsappCallbackController extends Controller
         }
 
         return $this->ok(['updated' => true]);
+    }
+
+    private function findConnectedJidConflictOwner(int $tenantId, string $connectedJid): ?int
+    {
+        $ownerTenantId = TenantWhatsappSetting::query()
+            ->where('connected_jid', $connectedJid)
+            ->where('connection_status', 'connected')
+            ->where('tenant_id', '!=', $tenantId)
+            ->orderBy('updated_at')
+            ->orderBy('id')
+            ->value('tenant_id');
+
+        return $ownerTenantId ? (int) $ownerTenantId : null;
+    }
+
+    private function isConnectedJidUniqueConstraintViolation(QueryException $exception, ?string $connectedJid): bool
+    {
+        if (!$connectedJid) {
+            return false;
+        }
+
+        $sqlState = (string) ($exception->errorInfo[0] ?? '');
+        $message = Str::lower($exception->getMessage());
+
+        return $sqlState === '23505'
+            && (str_contains($message, 'tenant_whatsapp_settings_connected_jid_active_unique')
+                || str_contains($message, 'connected_jid'));
+    }
+
+    private function tryRemoveSessionAfterJidConflict(int $tenantId, string $connectedJid, ?int $ownerTenantId): void
+    {
+        if (!$this->serviceClient->isEnabled()) {
+            return;
+        }
+
+        try {
+            $response = $this->serviceClient->removeSession($tenantId);
+            if (!($response['ok'] ?? false)) {
+                Log::warning('whatsapp.callback.session_state.jid_conflict_remove_session_failed', [
+                    'tenant_id' => $tenantId,
+                    'owner_tenant_id' => $ownerTenantId,
+                    'connected_jid' => $connectedJid,
+                    'status' => $response['status'] ?? null,
+                    'code' => $response['code'] ?? null,
+                ]);
+            }
+        } catch (\Throwable $exception) {
+            Log::warning('whatsapp.callback.session_state.jid_conflict_remove_session_exception', [
+                'tenant_id' => $tenantId,
+                'owner_tenant_id' => $ownerTenantId,
+                'connected_jid' => $connectedJid,
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 
     public function messages(Request $request)
