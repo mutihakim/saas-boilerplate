@@ -1,8 +1,7 @@
 import React from "react";
 
-export default function Checkbox({ className = '', ...props }:any) {
+export default function Checkbox({ className = '', ...props }: any) {
     return (
-        <React.Fragment>
         <input
             {...props}
             type="checkbox"
@@ -11,6 +10,5 @@ export default function Checkbox({ className = '', ...props }:any) {
                 className
             }
         />
-        </React.Fragment>
     );
 }

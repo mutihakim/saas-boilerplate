@@ -50,6 +50,10 @@ Jika perubahan menyentuh alur UI, baca juga `docs/05-ui-walkthrough.md`.
 - Dilarang menambah user-facing copy hardcoded pada area yang sudah translated.
 - Gunakan key translation yang konsisten dan update locale yang relevan.
 
+5. Database & Environment Configuration
+- Nilai bawaan `DB_DATABASE` di `.env.example` adalah `cabinet_core`, namun nama ini bersifat dinamis.
+- Agent tidak boleh mengasumsikan nama database utama selalu `cabinet_core` secara *hardcode*, dan harus selalu mengecek atau merujuk dari konfigurasi environment pengguna.
+
 ## 4) Docs Update Contract (Strict)
 
 Jika perubahan menyentuh fitur/modul:

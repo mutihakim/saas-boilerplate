@@ -125,6 +125,9 @@ function WhatsAppSettingsPage() {
     useEffect(() => {
         fetchSession();
 
+        if (!tenantId) return;
+        if (!(window as any).Echo) return;
+
         const channelName = `tenant.${tenantId}.whatsapp`;
         const channel = (window as any).Echo.private(channelName);
 

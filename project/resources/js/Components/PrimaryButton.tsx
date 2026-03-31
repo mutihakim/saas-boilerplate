@@ -1,8 +1,7 @@
 import React from "react";
 
-export default function PrimaryButton({ className = '', disabled, children, ...props }:any) {
+export default function PrimaryButton({ className = '', disabled, children, ...props }: any) {
     return (
-        <React.Fragment>
         <button
             {...props}
             className={
@@ -13,6 +12,5 @@ export default function PrimaryButton({ className = '', disabled, children, ...p
         >
             {children}
         </button>
-        </React.Fragment>
     );
 }

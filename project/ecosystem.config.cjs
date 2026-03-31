@@ -27,6 +27,12 @@ module.exports = {
       env: {
         APP_ENV: "local"
       }
+    },
+    {
+      name: "cabinet-whatsapp",
+      cwd: "./services/whatsapp",
+      script: "src/index.js",
+      node_args: "--env-file=.env"
     }
   ]
 };
