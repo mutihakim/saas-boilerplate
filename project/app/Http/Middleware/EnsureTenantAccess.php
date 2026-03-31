@@ -25,6 +25,10 @@ class EnsureTenantAccess
         $request->attributes->set('currentTenant', $tenant);
         app()->instance('currentTenant', $tenant);
 
+        if (!empty($tenant->locale)) {
+            \Illuminate\Support\Facades\App::setLocale($tenant->locale);
+        }
+
         $member = TenantMember::query()
             ->where('tenant_id', $tenant->id)
             ->where('user_id', $user->id)

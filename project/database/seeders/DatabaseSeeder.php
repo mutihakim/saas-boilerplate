@@ -27,6 +27,19 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        $e2eUser = User::query()->updateOrCreate(
+            ['email' => 'e2e@project.test'],
+            [
+                'name' => 'E2E Automation Seed',
+                'password' => Hash::make('password'),
+                'is_superadmin' => false,
+                'email_verified_at' => now()->utc(),
+                'job_title' => 'QA Testing Bot',
+                'city' => 'Jakarta',
+                'country' => 'Indonesia',
+            ]
+        );
+
         $tenantSeeds = [
             ['name' => 'Tenant One', 'slug' => 'tenant-one', 'plan_code' => 'free'],
             ['name' => 'Tenant Two', 'slug' => 'tenant-two', 'plan_code' => 'free'],
@@ -102,6 +115,10 @@ class DatabaseSeeder extends Seeder
             $this->upsertMembership($tenant, $owner, 'owner', $permissionRegistrar, $this->makeSeedWhatsappJid($seed['slug'], 'owner'));
             $this->upsertMembership($tenant, $admin, 'admin', $permissionRegistrar, $this->makeSeedWhatsappJid($seed['slug'], 'admin'));
             $this->upsertMembership($tenant, $member, 'member', $permissionRegistrar, $this->makeSeedWhatsappJid($seed['slug'], 'member'));
+
+            if ($seed['slug'] === 'tenant-one') {
+                $this->upsertMembership($tenant, $e2eUser, 'owner', $permissionRegistrar, '628000000000@c.us');
+            }
 
             // Compatibility transition from legacy viewer to member role code.
             TenantMember::query()

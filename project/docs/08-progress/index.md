@@ -16,8 +16,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 
 ## Top Global Blocker
 
-- Workspace smoke E2E membutuhkan seed credential eksplisit agar bisa dijalankan otomatis di semua environment.
-- Shared shell recovery untuk tenant/admin/account kini sudah memakai parity penuh Velzon `Saas`; blocker tersisa adalah otomasi smoke E2E dengan seed credential agar mode compact, submenu, customizer, dan branding tenant bisa diverifikasi otomatis.
+- *Belum ada blocker sistemik yang menghalangi rilis ke staging.*
 
 ## Konvensi Update (Per PR/Merge)
 

@@ -58,3 +58,7 @@ Mengingat skala modul, beberapa ekosistem wajib dinyalakan seiring berjalannya a
 2. `pm2 start ecosystem.config.cjs --only cabinet-reverb,cabinet-queue-worker`
 3. `pm2 save`
 4. `pm2 startup`
+
+## Batasan Infrastruktur (Architectural Constraint)
+Secara teknis, _service Node.js_ ini menggunakan strategi `LocalAuth` bawaan dari _whatsapp-web.js_ yang menyimpan berkas data kredensial (_auth artifacts_) dalam satu folder fisik di server host (`WA_AUTH_DIR`).
+- **Skalabilitas:** Ini bukanlah sebuah _development blocker_, melainkan konvensi rancangan. Jika Anda men-_deploy_ layanan ini dalam topologi multi-server (_Load Balancer_ / replika horizontal), otentikasi klien WA akan gagal tersinkronisasi. Solusi standarnya adalah Anda wajib meyediakan *Persistent Shared Volume* (seperti profil _EFS_ atau _NFS_) yang sama untuk _mount_ `WA_AUTH_DIR` tersebut lintas _node_, atau menerapkan tata letak *Sticky Sessions* pada lapisan ingress/LB Anda.

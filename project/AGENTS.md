@@ -43,7 +43,8 @@ Jika perubahan menyentuh alur UI, baca juga `docs/05-ui-walkthrough.md`.
 
 3. Subscription policy
 - Semua logic plan/limit wajib melalui `SubscriptionEntitlements`.
-- Dilarang hardcode plan checks di controller/page secara ad-hoc.
+- Pemeriksaan kuota (seperti pengecekan *max members*) diperbolehkan dilakukan di tingkat *Controller* agar dapat mengembalikan custom respons JSON (misal `HTTP 422` dengan envelope lengkap `ok: false`) ketimbang melemparkan generic `RuntimeException` lewat Policy/Gate.
+- Dilarang hardcode jumlah plan limit tanpa mengekstrak dari `subscription_entitlements` config.
 
 4. i18n policy
 - Dilarang menambah user-facing copy hardcoded pada area yang sudah translated.

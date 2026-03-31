@@ -273,10 +273,9 @@ export function collectExpandedIds(items: ShellNavItem[], pathname: string, expa
 }
 
 export function buildHorizontalNavigation(sections: ShellNavSection[]): ShellNavItem[] {
-    return sections.map((section) => ({
-        id: section.id,
-        labelKey: section.titleKey,
-        icon: section.icon,
-        children: section.items,
-    }));
+    const flattenedItems: ShellNavItem[] = [];
+    for (const section of sections) {
+        flattenedItems.push(...section.items);
+    }
+    return flattenedItems;
 }

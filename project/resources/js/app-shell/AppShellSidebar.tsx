@@ -154,35 +154,33 @@ export default function AppShellSidebar({ sections, preferences, onCloseMobileSi
     return (
         <>
             <div className="app-menu navbar-menu">
-                {preferences.layoutType === 'twocolumn' ? null : (
-                    <div className="navbar-brand-box">
-                        <Link href={homeLink} className="logo logo-dark">
-                            <span className="logo-sm">
-                                <ApplicationLogo compact dark />
-                            </span>
-                            <span className="logo-lg">
-                                <ApplicationLogo dark />
-                            </span>
-                        </Link>
+                <div className="navbar-brand-box">
+                    <Link href={homeLink} className="logo logo-dark">
+                        <span className="logo-sm">
+                            <ApplicationLogo compact dark />
+                        </span>
+                        <span className="logo-lg">
+                            <ApplicationLogo dark />
+                        </span>
+                    </Link>
 
-                        <Link href={homeLink} className="logo logo-light">
-                            <span className="logo-sm">
-                                <ApplicationLogo compact dark={usesDarkLogo} />
-                            </span>
-                            <span className="logo-lg">
-                                <ApplicationLogo dark={usesDarkLogo} />
-                            </span>
-                        </Link>
-                        <button
-                            onClick={toggleSmHoverMenu}
-                            type="button"
-                            className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
-                            id="vertical-hover"
-                        >
-                            <i className="ri-record-circle-line"></i>
-                        </button>
-                    </div>
-                )}
+                    <Link href={homeLink} className="logo logo-light">
+                        <span className="logo-sm">
+                            <ApplicationLogo compact dark={usesDarkLogo} />
+                        </span>
+                        <span className="logo-lg">
+                            <ApplicationLogo dark={usesDarkLogo} />
+                        </span>
+                    </Link>
+                    <button
+                        onClick={toggleSmHoverMenu}
+                        type="button"
+                        className="btn btn-sm p-0 fs-20 header-item float-end btn-vertical-sm-hover"
+                        id="vertical-hover"
+                    >
+                        <i className="ri-record-circle-line"></i>
+                    </button>
+                </div>
 
                 {preferences.layoutType === 'horizontal' ? (
                     <div id="scrollbar">
